@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import moment from "moment";
 import * as CONSTANTS from "../../constants";
 import { Box } from "@mui/system";
@@ -22,8 +22,25 @@ const IncomeCalculatorViewComponent = ({
   paidAfter,
   workdays = [],
   holidays = [],
+  daysOff = [],
 }) => {
   const [dates, setDates] = useState([]);
+
+  const isDayOff = useCallback(
+    (day) => {
+      let isOff = false;
+      daysOff.forEach((off) => {
+        const current = moment(day, CONSTANTS.DATE_FORMAT);
+        const start = moment(off[0], CONSTANTS.DATE_FORMAT);
+        const end = moment(off[1], CONSTANTS.DATE_FORMAT);
+        if (current.isBetween(start, end)) {
+          isOff = true;
+        }
+      });
+      return isOff;
+    },
+    [daysOff]
+  );
 
   useEffect(() => {
     if (
@@ -38,17 +55,17 @@ const IncomeCalculatorViewComponent = ({
           const c = new Date(current);
 
           if (c < moment(endDate, CONSTANTS.DATE_FORMAT).toDate()) {
-            //TODO: Check if a date is a day off.
             dates.push({
               date: c,
               isWorkDay: workdays[moment(c).day()],
+              isDayOff: isDayOff(c),
             });
           }
           current.setDate(current.getDate() + 1);
         }
 
         const numberOfWorkingDays = dates.filter(
-          (date) => date.isWorkDay
+          (date) => date.isWorkDay && !date.isDayOff
         ).length;
 
         const s = dates[0]?.date;
@@ -77,7 +94,7 @@ const IncomeCalculatorViewComponent = ({
 
       setDates(data);
     }
-  }, [startDate, endDate, workdays, amount, taxes, hours, paidAfter]);
+  }, [startDate, endDate, workdays, amount, taxes, hours, paidAfter, isDayOff]);
 
   const views = useMemo(() => {
     return [

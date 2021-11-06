@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Fragment } from "react";
 import {
   Box,
   TextField,
@@ -8,8 +8,11 @@ import {
   FormControlLabel,
   FormLabel,
   Divider,
+  Button,
+  IconButton,
 } from "@mui/material";
 import { MobileDatePicker } from "@mui/lab";
+import { Delete as DeleteIcon } from "@mui/icons-material";
 import IncomeCalculatorViewComponent from "./view";
 import * as CONSTANTS from "../../constants";
 
@@ -20,6 +23,7 @@ const IncomeCalculatorContainer = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [paidAfter, setPaidAfter] = useState(1);
+  const [daysOff, setDaysOff] = useState([[null, null]]);
 
   const [workdays, setWorkDays] = useState({
     Sunday: false,
@@ -60,6 +64,27 @@ const IncomeCalculatorContainer = () => {
       ...prev,
       [e.currentTarget.value]: checked,
     }));
+  };
+
+  const onChangedDaysOff = (i, j, value) => {
+    setDaysOff((prev) => {
+      const newPrev = [...prev];
+      newPrev[i][j] = value;
+      return newPrev;
+    });
+  };
+
+  const onRemoveDaysOff = (i) => {
+    console.log(i);
+    setDaysOff((prev) => {
+      const newPrev = [...prev];
+      newPrev.splice(i, 1)
+      return newPrev;
+    });
+  };
+
+  const onAddedDaysOff = () => {
+    setDaysOff((prev) => [...prev, [null, null]]);
   };
 
   return (
@@ -152,7 +177,9 @@ const IncomeCalculatorContainer = () => {
             </Grid>
           </Grid>
           <Grid item xs={12}>
-            <Box ml={2}><FormLabel>Work Days:</FormLabel></Box>
+            <Box ml={2}>
+              <FormLabel>Work Days:</FormLabel>
+            </Box>
             <Grid
               container
               spacing={1}
@@ -178,6 +205,57 @@ const IncomeCalculatorContainer = () => {
         </Grid>
       </Box>
       <Box mb={3}>
+        <Grid
+          container
+          spacing={1}
+          justifyContent="flex-start"
+          alignItems="center"
+          sx={{ ml: 1 }}
+        >
+          <Grid item xs={12}>
+            <FormLabel>Days Off:</FormLabel>
+          </Grid>
+          {daysOff.map((off, i) => (
+            <Fragment key={i}>
+              <Grid item xs={1}>
+                <IconButton onClick={onRemoveDaysOff.bind(this, i)}>
+                  <DeleteIcon />
+                </IconButton>
+              </Grid>
+              <Grid item xs={5}>
+                <Stack spacing={3}>
+                  <MobileDatePicker
+                    label="Start Date"
+                    inputFormat={CONSTANTS.DATE_FORMAT}
+                    value={off[0]}
+                    onChange={onChangedDaysOff.bind(this, i, 0)}
+                    renderInput={(params) => <TextField {...params} />}
+                  />
+                </Stack>
+              </Grid>
+              <Grid item xs={1}>
+                to
+              </Grid>
+              <Grid item xs={5}>
+                <Stack spacing={3}>
+                  <MobileDatePicker
+                    label="End Date"
+                    inputFormat={CONSTANTS.DATE_FORMAT}
+                    value={off[1]}
+                    onChange={onChangedDaysOff.bind(this, i, 1)}
+                    renderInput={(params) => <TextField {...params} />}
+                  />
+                </Stack>
+              </Grid>
+            </Fragment>
+          ))}
+
+          <Grid item xs={12}>
+            <Button onClick={onAddedDaysOff}>Add More</Button>
+          </Grid>
+        </Grid>
+      </Box>
+      <Box mb={3}>
         <Divider light={false} />
       </Box>
       <Box>
@@ -189,6 +267,7 @@ const IncomeCalculatorContainer = () => {
           endDate={endDate}
           paidAfter={paidAfter}
           workdays={Object.keys(workdays).map((key) => workdays[key])}
+          daysOff={daysOff}
         />
       </Box>
     </Box>
